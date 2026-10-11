@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "#celebration", label: "جشن" },
   { href: "#quotes", label: "نقل قول‌ها" },
   { href: "#message", label: "پیام" },
+  { href: "https://github.com/sofiyabahari465-tech/dokhtar", label: "GitHub" },
 ];
 
 export function Navbar() {

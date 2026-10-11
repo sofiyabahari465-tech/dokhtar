@@ -1,9 +1,44 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Heart, Sparkles, ChevronDown } from "lucide-react";
 
+const PHRASES = [
+  "بهارِ جهان",
+  "ستاره‌ی شب",
+  "آرامشِ قلب",
+  "زیباییِ زندگی",
+  "فرشته‌ی زمین",
+];
+
 export function Hero() {
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [displayed, setDisplayed] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const current = PHRASES[phraseIdx];
+    let timeout: ReturnType<typeof setTimeout>;
+
+    if (!isDeleting && displayed.length < current.length) {
+      timeout = setTimeout(() => {
+        setDisplayed(current.slice(0, displayed.length + 1));
+      }, 100);
+    } else if (!isDeleting && displayed.length === current.length) {
+      timeout = setTimeout(() => setIsDeleting(true), 1800);
+    } else if (isDeleting && displayed.length > 0) {
+      timeout = setTimeout(() => {
+        setDisplayed(current.slice(0, displayed.length - 1));
+      }, 50);
+    } else if (isDeleting && displayed.length === 0) {
+      setIsDeleting(false);
+      setPhraseIdx((i) => (i + 1) % PHRASES.length);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [displayed, isDeleting, phraseIdx]);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center px-4 py-20 z-10">
       <div className="absolute inset-0 bg-gradient-to-b from-pink-50/40 via-rose-50/30 to-amber-50/40 dark:from-pink-950/30 dark:via-rose-950/20 dark:to-amber-950/30 pointer-events-none" />
@@ -31,10 +66,28 @@ export function Hero() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5, duration: 0.8 }}
-          className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black mb-6 leading-tight"
+          className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black mb-4 leading-tight"
         >
           <span className="text-gradient-rose">روز دختر</span>
         </motion.h1>
+
+        {/* Animated typewriter subtitle */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 h-12 flex items-center justify-center"
+        >
+          <span className="text-foreground/90">
+            دختر،{" "}
+            <span className="text-gradient-gold">{displayed}</span>
+            <motion.span
+              animate={{ opacity: [1, 0] }}
+              transition={{ duration: 0.6, repeat: Infinity }}
+              className="inline-block w-0.5 h-8 bg-pink-500 mx-1 align-middle"
+            />
+          </span>
+        </motion.div>
 
         {/* Decorative heart */}
         <motion.div
@@ -53,15 +106,6 @@ export function Hero() {
         </motion.div>
 
         {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.8 }}
-          className="text-xl sm:text-2xl md:text-3xl text-foreground/80 mb-4 font-medium leading-relaxed max-w-3xl mx-auto"
-        >
-          به نام دختری که لبخندش، جهان را بهار می‌کند
-        </motion.p>
-
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -93,7 +137,7 @@ export function Hero() {
             className="inline-flex items-center gap-2 px-8 py-4 rounded-full glass-card font-semibold text-pink-700 dark:text-pink-300 hover:scale-105 transition-transform"
           >
             <Sparkles className="w-5 h-5" />
-            <span>نقل قول‌ها</span>
+            <span>کاوش کن</span>
           </a>
         </motion.div>
       </motion.div>

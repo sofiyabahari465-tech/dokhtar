@@ -4,9 +4,14 @@ import { Navbar } from "@/components/girls-day/navbar";
 import { Hero } from "@/components/girls-day/hero";
 import { FloatingElements } from "@/components/girls-day/floating-elements";
 import { Fireworks } from "@/components/girls-day/fireworks";
-import { Quotes } from "@/components/girls-day/quotes";
+import { CountdownSection } from "@/components/girls-day/countdown";
 import { CakeSection } from "@/components/girls-day/cake";
+import { Quotes } from "@/components/girls-day/quotes";
+import { GallerySection } from "@/components/girls-day/gallery";
 import { MusicPlayer } from "@/components/girls-day/music-player";
+import { GreetingCards } from "@/components/girls-day/greeting-cards";
+import { WishesSection } from "@/components/girls-day/wishes";
+import { QuizSection } from "@/components/girls-day/quiz";
 import { MessageSection } from "@/components/girls-day/message-section";
 import { HistorySection } from "@/components/girls-day/history-section";
 import { Footer } from "@/components/girls-day/footer";
@@ -37,9 +42,14 @@ export default function Home() {
         <Navbar />
         <main className="flex-1">
           <Hero />
+          <CountdownSection />
           <CakeSection />
           <Quotes />
+          <GallerySection />
           <MusicPlayer />
+          <GreetingCards />
+          <WishesSection />
+          <QuizSection />
           <MessageSection />
           <HistorySection />
         </main>

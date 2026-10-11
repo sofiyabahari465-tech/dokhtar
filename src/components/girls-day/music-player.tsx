@@ -2,40 +2,81 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Play, Pause, Volume2, Music, Heart } from "lucide-react";
+import { Play, Pause, Volume2, Music, Heart, RotateCcw } from "lucide-react";
 
 export function MusicPlayer() {
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Simulated track — 3:42 = 222 seconds
-  const duration = 222;
+  const [duration, setDuration] = useState(45); // fallback
+  const [volume, setVolume] = useState(0.7);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    if (playing) {
-      intervalRef.current = setInterval(() => {
-        setProgress((p) => {
-          if (p >= duration) {
-            setPlaying(false);
-            return 0;
-          }
-          return p + 1;
-        });
-      }, 1000);
-    } else if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onLoaded = () => {
+      if (audio.duration && !isNaN(audio.duration)) {
+        setDuration(audio.duration);
+      }
     };
-  }, [playing]);
+    const onTime = () => setProgress(audio.currentTime);
+    const onEnd = () => setPlaying(false);
+    audio.addEventListener("loadedmetadata", onLoaded);
+    audio.addEventListener("timeupdate", onTime);
+    audio.addEventListener("ended", onEnd);
+    return () => {
+      audio.removeEventListener("loadedmetadata", onLoaded);
+      audio.removeEventListener("timeupdate", onTime);
+      audio.removeEventListener("ended", onEnd);
+    };
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = volume;
+  }, [volume]);
+
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+    } else {
+      audio.play().catch(() => {
+        // autoplay may be blocked — try again on next click
+      });
+      setPlaying(true);
+    }
+  };
+
+  const restart = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    setProgress(0);
+  };
+
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const audio = audioRef.current;
+    if (!audio || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    // RTL: right edge is 0, left edge is duration
+    const x = e.clientX - rect.left;
+    const ratio = 1 - x / rect.width;
+    audio.currentTime = ratio * duration;
+    setProgress(audio.currentTime);
+  };
 
   const formatTime = (s: number) => {
+    if (!s || isNaN(s)) return "0:00";
     const m = Math.floor(s / 60);
-    const sec = s % 60;
+    const sec = Math.floor(s % 60);
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
+
+  const progressPct = duration ? (progress / duration) * 100 : 0;
 
   return (
     <section className="relative py-24 px-4 z-10">
@@ -52,16 +93,15 @@ export function MusicPlayer() {
             <span>آهنگ روز دختر</span>
           </div>
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-black mb-4">
-            <span className="text-gradient-rose">ریتمِ قلب</span>
+            <span className="text-gradient-rose">آوازِ قلب</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            روی دکمه پخش بزن و حال‌وهوای روز دختر را با موسیقی زندگی کن
+            آهنگی ملایم و احساسی، تقدیم به تمام دختران زیبای دنیا
           </p>
         </div>
 
         {/* Player card */}
-        <div className="glass-card rounded-3xl p-8 sm:p-10 relative overflow-hidden">
-          {/* Animated bg */}
+        <div className="glass-card rounded-3xl p-6 sm:p-10 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-pink-400/10 via-rose-300/10 to-amber-300/10" />
 
           {/* Animated equalizer bars */}
@@ -99,7 +139,7 @@ export function MusicPlayer() {
               <div className="absolute inset-2 rounded-full bg-gradient-to-br from-pink-300 to-rose-400 opacity-50" />
               <div className="absolute inset-0 rounded-full border-2 border-dashed border-white/40" />
               <Heart
-                className="w-8 h-8 text-white relative z-10"
+                className="w-8 h-8 text-white relative z-10 animate-heart-beat"
                 fill="currentColor"
               />
               <div className="absolute inset-1/2 w-3 h-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-inner" />
@@ -112,19 +152,22 @@ export function MusicPlayer() {
               </h3>
               <p className="text-sm text-muted-foreground mb-4 flex items-center gap-1.5">
                 <Heart className="w-3.5 h-3.5 text-pink-500" fill="currentColor" />
-                <span>برای تمام دخترانِ دنیا</span>
+                <span>تقدیم به دخترانِ دنیا</span>
               </p>
 
               {/* Progress bar */}
               <div className="mb-3">
-                <div className="relative h-2 rounded-full bg-pink-200/50 overflow-hidden">
+                <div
+                  onClick={seek}
+                  className="relative h-2 rounded-full bg-pink-200/50 overflow-hidden cursor-pointer"
+                >
                   <div
-                    className="absolute inset-y-0 right-0 bg-gradient-to-l from-pink-500 to-amber-400 rounded-full transition-all duration-300"
-                    style={{ width: `${(progress / duration) * 100}%` }}
+                    className="absolute inset-y-0 right-0 bg-gradient-to-l from-pink-500 to-amber-400 rounded-full"
+                    style={{ width: `${progressPct}%` }}
                   />
                   <motion.div
                     className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white shadow-lg border-2 border-pink-500"
-                    style={{ right: `calc(${(progress / duration) * 100}% - 8px)` }}
+                    style={{ right: `calc(${progressPct}% - 8px)` }}
                   />
                 </div>
               </div>
@@ -134,21 +177,27 @@ export function MusicPlayer() {
                 <span className="text-xs font-mono text-muted-foreground">
                   {formatTime(progress)}
                 </span>
-                <button
-                  onClick={() => setPlaying(!playing)}
-                  className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white shadow-lg glow-rose hover:scale-110 transition-transform"
-                  aria-label={playing ? "توقف" : "پخش"}
-                >
-                  {playing ? (
-                    <Pause className="w-5 h-5" fill="currentColor" />
-                  ) : (
-                    <Play
-                      className="w-5 h-5 mr-0.5"
-                      fill="currentColor"
-                    />
-                  )}
-                  <span className="absolute inset-0 rounded-full shimmer pointer-events-none" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={restart}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-pink-600 dark:text-pink-300 hover:bg-pink-100/50 dark:hover:bg-pink-900/20 transition-colors"
+                    aria-label="شروع مجدد"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={toggle}
+                    className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white shadow-lg glow-rose hover:scale-110 transition-transform"
+                    aria-label={playing ? "توقف" : "پخش"}
+                  >
+                    {playing ? (
+                      <Pause className="w-5 h-5" fill="currentColor" />
+                    ) : (
+                      <Play className="w-5 h-5 mr-0.5" fill="currentColor" />
+                    )}
+                    <span className="absolute inset-0 rounded-full shimmer pointer-events-none" />
+                  </button>
+                </div>
                 <span className="text-xs font-mono text-muted-foreground">
                   {formatTime(duration)}
                 </span>
@@ -157,18 +206,32 @@ export function MusicPlayer() {
               {/* Volume */}
               <div className="flex items-center gap-2 mt-4 text-pink-500">
                 <Volume2 className="w-4 h-4" />
-                <div className="flex-1 h-1 rounded-full bg-pink-200/50 overflow-hidden">
-                  <div className="h-full w-3/4 bg-gradient-to-l from-pink-500 to-amber-400 rounded-full" />
-                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={volume}
+                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  className="flex-1 h-1.5 accent-pink-500 cursor-pointer"
+                  aria-label="صدا"
+                />
               </div>
             </div>
           </div>
-        </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-4 leading-relaxed">
-          ※ این یک دموی موسیقی است. برای نسخه‌ی کامل، فایل صوتی واقعی را در پروژه قرار دهید.
-        </p>
+          <p className="text-center text-xs text-muted-foreground mt-6 leading-relaxed">
+            ♪ آهنگ اصلی و کپی‌رایت‌آزاد — ساخته‌شده با عشق برای این پروژه
+          </p>
+        </div>
       </motion.div>
+
+      {/* Hidden audio element */}
+      <audio
+        ref={audioRef}
+        src="audio/girls-day-music.mp3"
+        preload="metadata"
+      />
     </section>
   );
 }

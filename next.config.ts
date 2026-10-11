@@ -1,17 +1,15 @@
 import type { NextConfig } from "next";
 
 // For GitHub Pages deployment, set basePath to your repo name
-// e.g. if your repo is `username/girls-day`, set basePath to `/girls-day`
-const repoName = process.env.GITHUB_REPOSITORY
-  ? process.env.GITHUB_REPOSITORY.split("/")[1]
-  : "";
+// e.g. if your repo is `username/dokhtar`, set basePath to `/dokhtar`
+const repoName = "dokhtar";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-  // basePath for GitHub Pages — empty string for Vercel/root domain
-  ...(repoName && !process.env.VERCEL
-    ? { basePath: `/${repoName}`, assetPrefix: `/${repoName}/` }
-    : {}),
+  // Static export for GitHub Pages — generates a fully static site in `out/`
+  output: "export",
+  // basePath for GitHub Pages project sites (https://username.github.io/dokhtar/)
+  basePath: `/${repoName}`,
+  assetPrefix: `/${repoName}/`,
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -23,3 +21,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
